@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: tf
+      POSTGRES_PASSWORD: tf
+      POSTGRES_DB: tesseract_finance
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tf -d tesseract_finance"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  api:
+    build:
+      context: .
+      target: api
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tf:tf@db:5432/tesseract_finance
+    command: sh -c "alembic upgrade head && uvicorn tesseract_finance.main:app --host 0.0.0.0 --port 8000 --reload"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+      - ./migrations:/app/migrations
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
