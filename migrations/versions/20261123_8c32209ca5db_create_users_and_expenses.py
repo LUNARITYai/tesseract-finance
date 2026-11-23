@@ -1,15 +1,16 @@
-"""create users and expenses
-
-Revision ID: 8c32209ca5db
-Revises:
-Create Date: 2026-11-23 23:59:20.216721
-
-"""
+"""create users and expenses"""
 
 from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
+
+from tesseract_finance.models.base import (
+    CREATE_UPDATED_AT_FUNCTION,
+    UPDATED_AT_FUNCTION,
+    create_updated_at_trigger,
+    drop_updated_at_trigger,
+)
 
 revision: str = "8c32209ca5db"
 down_revision: str | None = None
@@ -63,6 +64,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.CheckConstraint("amount > 0", name=op.f("ck_expenses_amount_positive")),
+        sa.CheckConstraint("currency ~ '^[A-Z]{3}$'", name=op.f("ck_expenses_currency_code")),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], name=op.f("fk_expenses_user_id_users")),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_expenses")),
     )
@@ -72,28 +74,15 @@ def upgrade() -> None:
         ["user_id", sa.literal_column("date DESC")],
         unique=False,
     )
-    # updated_at is owned by the database: refresh it on every UPDATE.
-    op.execute(
-        """
-        CREATE FUNCTION set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$
-        BEGIN
-            NEW.updated_at = now();
-            RETURN NEW;
-        END;
-        $$
-        """
-    )
+    op.execute(CREATE_UPDATED_AT_FUNCTION)
     for table in TIMESTAMPED_TABLES:
-        op.execute(
-            f"CREATE TRIGGER {table}_set_updated_at BEFORE UPDATE ON {table} "
-            "FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
-        )
+        op.execute(create_updated_at_trigger(table))
 
 
 def downgrade() -> None:
     for table in TIMESTAMPED_TABLES:
-        op.execute(f"DROP TRIGGER {table}_set_updated_at ON {table}")
+        op.execute(drop_updated_at_trigger(table))
     op.drop_index("ix_expenses_user_id_date", table_name="expenses")
     op.drop_table("expenses")
     op.drop_table("users")
-    op.execute("DROP FUNCTION set_updated_at()")
+    op.execute(f"DROP FUNCTION {UPDATED_AT_FUNCTION}()")

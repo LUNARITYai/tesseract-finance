@@ -6,7 +6,6 @@ from tesseract_finance.models import User
 
 
 async def ensure_user(session: AsyncSession, email: str) -> User:
-    """Return the user with this email, creating it on first use. Safe to call concurrently."""
     email = email.strip().lower()
     user = await session.scalar(select(User).where(User.email == email))
     if user is None:

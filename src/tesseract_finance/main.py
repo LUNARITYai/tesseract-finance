@@ -8,11 +8,6 @@ from tesseract_finance.api import expenses, health
 
 
 async def http_error_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
-    """Give every HTTP error the spec's {"detail", "code"} shape.
-
-    The code is derived from the status (404 -> "not_found"), so routers raise a
-    plain HTTPException and never pick codes by hand.
-    """
     code = HTTPStatus(exc.status_code).phrase.lower().replace(" ", "_").replace("-", "_")
     return JSONResponse(
         {"detail": exc.detail, "code": code},

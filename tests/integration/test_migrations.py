@@ -1,5 +1,3 @@
-"""Migration roundtrip on its own database, so downgrading never touches the test schema."""
-
 import asyncio
 import os
 import sys
@@ -11,7 +9,6 @@ from tests.conftest import ROOT, ensure_database
 
 
 def migrate_database_url() -> str:
-    """The test database URL with ``_test`` swapped for ``_migrate`` in the name."""
     url = make_url(get_settings().database_url)
     assert url.database and "_test" in url.database
     return url.set(database=url.database.replace("_test", "_migrate", 1)).render_as_string(

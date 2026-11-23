@@ -10,7 +10,10 @@ from tesseract_finance.models.base import Base, Timestamps
 
 class Expense(Timestamps, Base):
     __tablename__ = "expenses"
-    __table_args__ = (CheckConstraint("amount > 0", name="amount_positive"),)
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="amount_positive"),
+        CheckConstraint("currency ~ '^[A-Z]{3}$'", name="currency_code"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))

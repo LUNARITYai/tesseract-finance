@@ -291,3 +291,16 @@ async def test_database_rejects_non_positive_amount(session: AsyncSession, user_
             session.add(
                 Expense(user_id=user_a.id, amount=Decimal("0"), date=datetime(2026, 1, 1).date())
             )
+
+
+async def test_database_rejects_lowercase_currency(session: AsyncSession, user_a: User) -> None:
+    with pytest.raises(IntegrityError, match="ck_expenses_currency_code"):
+        async with session.begin_nested():
+            session.add(
+                Expense(
+                    user_id=user_a.id,
+                    amount=Decimal("1.00"),
+                    currency="pln",
+                    date=datetime(2026, 1, 1).date(),
+                )
+            )

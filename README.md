@@ -1,5 +1,5 @@
 # tesseract-finance
-Expense tracking API with receipt OCR (FastAPI, PostgreSQL, Tesseract) — backend learning project
+Expense tracking API with receipt OCR (FastAPI, PostgreSQL, Tesseract). Backend learning project.
 
 ## Development
 
@@ -11,6 +11,6 @@ uv run pytest                       # uses DATABASE_URL, default .../tesseract_f
 uv run ruff check . && uv run ruff format --check .
 ```
 
-The suite creates its databases if missing: the test database named in `DATABASE_URL`, and a
-`_migrate` twin (`tesseract_finance_test` -> `tesseract_finance_migrate`) for the migration
-roundtrip, which downgrades to base and so never runs against the test schema.
+The suite creates its databases if missing. The test database is the name in `DATABASE_URL`.
+The migration roundtrip uses that name with `_test` replaced by `_migrate`, so a downgrade to
+base never runs against the test schema.

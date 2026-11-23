@@ -10,8 +10,6 @@ from tesseract_finance.schemas.pagination import PageParams
 
 
 class ExpenseService:
-    """Expenses of one user. Every query is scoped to that user; another user's row is absent."""
-
     def __init__(self, session: AsyncSession, user_id: uuid.UUID) -> None:
         self.session = session
         self.user_id = user_id

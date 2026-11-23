@@ -1,6 +1,4 @@
-"""Test harness: a real Postgres, migrated once per session, one rolled-back transaction per test.
-
-DATABASE_URL picks the test database. It defaults to ``tesseract_finance_test`` and is set
+"""DATABASE_URL picks the test database. It defaults to ``tesseract_finance_test`` and is set
 before the app reads its settings, so a developer's ``.env`` never points the suite at the
 dev database.
 """
@@ -15,7 +13,7 @@ from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.engine import Connection, make_url
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, AsyncSession, create_async_engine
 
 os.environ.setdefault(
     "DATABASE_URL", "postgresql+asyncpg://tf:tf@localhost:5434/tesseract_finance_test"
@@ -43,7 +41,6 @@ def upgrade_head(connection: Connection) -> None:
 
 
 async def ensure_database(url: str) -> None:
-    """Create the database named in ``url`` if it does not exist yet."""
     sa_url = make_url(url)
     name = sa_url.database
     assert name and ("test" in name or "migrate" in name), f"refusing to use {name!r} for tests"
@@ -70,10 +67,14 @@ async def engine() -> AsyncIterator[AsyncEngine]:
 
 
 @pytest.fixture
-async def session(engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
-    """A session bound to an outer transaction that is rolled back after the test.
+async def committed_connection(engine: AsyncEngine) -> AsyncIterator[AsyncConnection]:
+    async with engine.connect() as connection:
+        yield connection
 
-    ``create_savepoint`` turns the app's ``session.commit()`` into a savepoint release,
+
+@pytest.fixture
+async def session(engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
+    """``create_savepoint`` turns the app's ``session.commit()`` into a savepoint release,
     so nothing a test writes escapes it.
     """
     async with engine.connect() as conn:
@@ -93,7 +94,6 @@ ClientFactory = Callable[..., Awaitable[AsyncClient]]
 
 @pytest.fixture
 async def make_client(session: AsyncSession) -> AsyncIterator[ClientFactory]:
-    """Build an API client that shares the test session; overrides are applied per client."""
     clients: list[AsyncClient] = []
 
     async def make(overrides: dict | None = None) -> AsyncClient:

@@ -16,7 +16,6 @@ Pagination = Annotated[PageParams, Query()]
 async def get_current_user(
     session: SessionDep, settings: Annotated[Settings, Depends(get_settings)]
 ) -> User:
-    """Pre-M4 stand-in: every request acts as the DEV_USER_EMAIL user. M4 swaps in JWT."""
     return await ensure_user(session, settings.dev_user_email)
 
 

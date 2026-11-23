@@ -13,10 +13,10 @@ from tesseract_finance.schemas.money import Amount, parse_amount
         ("25", Decimal("25.00")),
         ("25.5", Decimal("25.50")),
         ("0.01", Decimal("0.01")),
-        ("25.100", Decimal("25.10")),  # trailing zeros do not add precision
-        ("9999999999.99", Decimal("9999999999.99")),  # NUMERIC(12,2) maximum
+        ("25.100", Decimal("25.10")),
+        ("9999999999.99", Decimal("9999999999.99")),
         (25, Decimal("25.00")),
-        (25.1, Decimal("25.10")),  # JSON number: read as written, not as binary float
+        (25.1, Decimal("25.10")),
         (0.07, Decimal("0.07")),
         (Decimal("3.5"), Decimal("3.50")),
     ],
@@ -39,7 +39,7 @@ def test_parse_amount_accepts_positive_two_place_values(raw: object, expected: D
         "0.001",
         "25.123",
         25.123,
-        "10000000000.00",  # 11 integer digits do not fit NUMERIC(12,2)
+        "10000000000.00",
         10_000_000_000,
         "abc",
         "",

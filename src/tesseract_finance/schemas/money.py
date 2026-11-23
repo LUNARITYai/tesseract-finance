@@ -1,13 +1,10 @@
-"""Money at the HTTP boundary: parsed once into a two-place Decimal, written back as a string."""
-
 from decimal import Decimal, InvalidOperation
 from typing import Annotated
 
 from pydantic import BeforeValidator, PlainSerializer
 
 CENT = Decimal("0.01")
-# Largest value NUMERIC(12,2) holds: 10 integer digits, 2 fractional.
-MAX_AMOUNT = Decimal("9999999999.99")
+NUMERIC_12_2_MAX = Decimal("9999999999.99")
 
 
 def parse_amount(value: object) -> Decimal:
@@ -26,8 +23,8 @@ def parse_amount(value: object) -> Decimal:
         raise ValueError("amount must be a finite number")
     if amount <= 0:
         raise ValueError("amount must be greater than 0")
-    if amount > MAX_AMOUNT:
-        raise ValueError(f"amount must be at most {MAX_AMOUNT}")
+    if amount > NUMERIC_12_2_MAX:
+        raise ValueError(f"amount must be at most {NUMERIC_12_2_MAX}")
     quantized = amount.quantize(CENT)
     if quantized != amount:
         raise ValueError("amount must have at most 2 decimal places")

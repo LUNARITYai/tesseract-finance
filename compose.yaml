@@ -6,7 +6,6 @@ services:
       POSTGRES_PASSWORD: tf
       POSTGRES_DB: tesseract_finance
     ports:
-      # Host port 5434: 5432 is often taken by a local Postgres.
       - "5434:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data

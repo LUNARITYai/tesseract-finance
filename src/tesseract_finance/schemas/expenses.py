@@ -22,8 +22,6 @@ class ExpenseCreate(BaseModel):
 
 
 class ExpenseUpdate(BaseModel):
-    """Partial update: only fields present in the body change; null clears nullable ones."""
-
     model_config = ConfigDict(extra="forbid")
 
     amount: Amount | None = None

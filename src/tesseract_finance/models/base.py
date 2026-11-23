@@ -20,10 +20,33 @@ class Base(DeclarativeBase):
     __mapper_args__: ClassVar[dict[str, Any]] = {"eager_defaults": True}
 
 
-class Timestamps:
-    """Database-owned timestamps. A trigger (see migrations) refreshes updated_at on UPDATE."""
+UPDATED_AT_FUNCTION = "set_updated_at"
 
+CREATE_UPDATED_AT_FUNCTION = f"""
+CREATE FUNCTION {UPDATED_AT_FUNCTION}() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$
+"""
+
+
+def create_updated_at_trigger(table: str) -> str:
+    return (
+        f"CREATE TRIGGER {table}_{UPDATED_AT_FUNCTION} BEFORE UPDATE ON {table} "
+        f"FOR EACH ROW EXECUTE FUNCTION {UPDATED_AT_FUNCTION}()"
+    )
+
+
+def drop_updated_at_trigger(table: str) -> str:
+    return f"DROP TRIGGER {table}_{UPDATED_AT_FUNCTION} ON {table}"
+
+
+class Timestamps:
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), server_onupdate=FetchedValue()
+        DateTime(timezone=True),
+        server_default=func.now(),
+        server_onupdate=FetchedValue(),
     )
