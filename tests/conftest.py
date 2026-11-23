@@ -23,7 +23,9 @@ os.environ.setdefault(
 
 from tesseract_finance.config import get_settings
 from tesseract_finance.db import get_session
+from tesseract_finance.deps import get_current_user
 from tesseract_finance.main import create_app
+from tesseract_finance.models import User
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -110,3 +112,30 @@ async def make_client(session: AsyncSession) -> AsyncIterator[ClientFactory]:
 @pytest.fixture
 async def client(make_client: ClientFactory) -> AsyncClient:
     return await make_client()
+
+
+@pytest.fixture
+async def user_a(session: AsyncSession) -> User:
+    return await add_user(session, "a@example.com")
+
+
+@pytest.fixture
+async def user_b(session: AsyncSession) -> User:
+    return await add_user(session, "b@example.com")
+
+
+async def add_user(session: AsyncSession, email: str) -> User:
+    user = User(email=email)
+    session.add(user)
+    await session.flush()
+    return user
+
+
+@pytest.fixture
+async def api_a(make_client: ClientFactory, user_a: User) -> AsyncClient:
+    return await make_client({get_current_user: lambda: user_a})
+
+
+@pytest.fixture
+async def api_b(make_client: ClientFactory, user_b: User) -> AsyncClient:
+    return await make_client({get_current_user: lambda: user_b})
